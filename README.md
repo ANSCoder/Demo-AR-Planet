@@ -1,4 +1,4 @@
 # Demo-AR-Planet
 This is the simple AR example for Planet.
 
-![](Demo-AR-Planet/Demo-Earth/Assets.xcassets/cover.imageset/cover.png)
+![](https://github.com/ANSCoder/Demo-AR-Planet/blob/master/Demo-Earth/Assets.xcassets/cover.imageset/cover.png)
