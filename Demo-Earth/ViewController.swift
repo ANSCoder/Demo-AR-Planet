@@ -13,68 +13,98 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
+    let configuration = ARWorldTrackingConfiguration()
     
+    //MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Set the view's delegate
-        sceneView.delegate = self
-        
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
-        
-        // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
-        
-        // Set the scene to the view
-        sceneView.scene = scene
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         // Create a session configuration
-        let configuration = ARWorldTrackingConfiguration()
-
-        // Run the view's session
-        sceneView.session.run(configuration)
+        self.sceneView.debugOptions = [ARSCNDebugOptions.showWorldOrigin, ARSCNDebugOptions.showFeaturePoints]
+        self.sceneView.session.run(configuration)
+        self.sceneView.autoenablesDefaultLighting = true
+        self.sceneView.scene.background.contents = #imageLiteral(resourceName: "stars_milky_way")
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        let sun = SCNNode(geometry: SCNSphere(radius: 0.35))
+        let earthParent = SCNNode()
+        let venusParent = SCNNode()
+        let moonParent = SCNNode()
+        
+        sun.geometry?.firstMaterial?.diffuse.contents = #imageLiteral(resourceName: "sun")
+        sun.position = SCNVector3(0,0,-1)
+        earthParent.position = SCNVector3(0,0,-1)
+        venusParent.position = SCNVector3(0,0,-1)
+        moonParent.position = SCNVector3(1.2 ,0 , 0)
+        
+        self.sceneView.scene.rootNode.addChildNode(sun)
+        self.sceneView.scene.rootNode.addChildNode(earthParent)
+        self.sceneView.scene.rootNode.addChildNode(venusParent)
+        
+        
+        let earth = planet(geometry: SCNSphere(radius: 0.2), diffuse: #imageLiteral(resourceName: "earth"), specular: #imageLiteral(resourceName: "earth_specular"), emission: #imageLiteral(resourceName: "earth_clouds"), normal: #imageLiteral(resourceName: "earth_normal"), position: SCNVector3(1.2 ,0 , 0))
+        let venus = planet(geometry: SCNSphere(radius: 0.1), diffuse: #imageLiteral(resourceName: "venus_surface"), specular: nil, emission: #imageLiteral(resourceName: "venus_atmosphere"), normal: nil, position: SCNVector3(0.7, 0, 0))
+        let moon = planet(geometry: SCNSphere(radius: 0.05), diffuse: #imageLiteral(resourceName: "moon"), specular: nil, emission: nil, normal: nil, position: SCNVector3(0,0,-0.3))
+        
+        
+        
+        let sunAction = Rotation(time: 8)
+        let earthParentRotation = Rotation(time: 14)
+        let venusParentRotation = Rotation(time: 10)
+        let earthRotation = Rotation(time: 8)
+        let moonRotation = Rotation(time: 5)
+        let venusRotation = Rotation(time: 8)
+        
+        
+        earth.runAction(earthRotation)
+        venus.runAction(venusRotation)
+        earthParent.runAction(earthParentRotation)
+        venusParent.runAction(venusParentRotation)
+        moonParent.runAction(moonRotation)
+        
+        
+        sun.runAction(sunAction)
+        earthParent.addChildNode(earth)
+        earthParent.addChildNode(moonParent)
+        venusParent.addChildNode(venus)
+        earth.addChildNode(moon)
+        moonParent.addChildNode(moon)
+        
+    }
+    
+    func planet(geometry: SCNGeometry, diffuse: UIImage, specular: UIImage?, emission: UIImage?, normal: UIImage?, position: SCNVector3) -> SCNNode {
+        let planet = SCNNode(geometry: geometry)
+        planet.geometry?.firstMaterial?.diffuse.contents = diffuse
+        planet.geometry?.firstMaterial?.specular.contents = specular
+        planet.geometry?.firstMaterial?.emission.contents = emission
+        planet.geometry?.firstMaterial?.normal.contents = normal
+        planet.position = position
+        return planet
+    }
+    
+    func Rotation(time: TimeInterval) -> SCNAction {
+        let Rotation = SCNAction.rotateBy(x: 0, y: CGFloat(360.degreesToRadians), z: 0, duration: time)
+        let foreverRotation = SCNAction.repeatForever(Rotation)
+        return foreverRotation
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
         // Pause the view's session
         sceneView.session.pause()
     }
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Release any cached data, images, etc that aren't in use.
-    }
 
-    // MARK: - ARSCNViewDelegate
-    
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
-    
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
-    }
-    
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
-        
-    }
 }
+
+extension Int {
+    var degreesToRadians: Double { return Double(self) * .pi/180}
+}
+
